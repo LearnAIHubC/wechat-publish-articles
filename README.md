@@ -1,29 +1,35 @@
 # WeChat Publish Articles
 
-Codex skill and helper script for publishing WeChat Official Account articles through the server-side WeChat APIs.
+一个用于微信公众号文章发布流程的 Codex Skill 和 Python 命令行辅助脚本。
 
-It covers the common publishing flow:
+它可以辅助完成常见的服务端发布链路：
 
-1. Get and cache an `access_token`.
-2. Upload inline article images.
-3. Upload a permanent cover image.
-4. Create a draft.
-5. Submit the draft for publication.
-6. Poll the asynchronous publish status.
+1. 获取并缓存 `access_token`。
+2. 上传正文内图片。
+3. 上传永久封面素材。
+4. 创建草稿。
+5. 提交草稿发布。
+6. 轮询异步发布状态。
 
-## Important Permission Note
+## 重要权限说明
 
-WeChat publishing APIs are permission-gated. The publish endpoint may return `48001 api unauthorized` when the account cannot call the API.
+微信公众号发布接口有账号权限限制。如果账号没有对应接口权限，发布接口可能返回：
 
-As of WeChat's current platform rules, personal-subject accounts, uncertified enterprise accounts, and accounts that do not support certification may be unable to call the publish APIs. Check the WeChat Official Account backend under Developer Center / API permissions before relying on automated publishing.
+```text
+48001 api unauthorized
+```
 
-Relevant docs:
+这通常不是脚本问题，而是公众号主体类型、认证状态或接口权限不满足要求。
 
-- [Publishing capability](https://developers.weixin.qq.com/doc/offiaccount/Publish/Publish.html)
-- [Submit draft for publication](https://developers.weixin.qq.com/doc/service/api/public/api_freepublish_submit.html)
-- [WeChat API index](https://developers.weixin.qq.com/doc/subscription/api/)
+根据微信公众平台当前规则，个人主体账号、企业主体未认证账号，以及不支持认证的账号，可能无法调用发布相关 API。正式接入前，请先在「微信公众平台后台 -> 开发者中心 -> 接口权限」确认账号是否具备草稿箱和发布能力。
 
-## Repository Layout
+相关官方文档：
+
+- [发布能力](https://developers.weixin.qq.com/doc/offiaccount/Publish/Publish.html)
+- [发布草稿接口](https://developers.weixin.qq.com/doc/service/api/public/api_freepublish_submit.html)
+- [微信公众号接口文档](https://developers.weixin.qq.com/doc/subscription/api/)
+
+## 目录结构
 
 ```text
 .
@@ -36,82 +42,87 @@ Relevant docs:
     └── wechat_publish.py
 ```
 
-## Requirements
+## 环境要求
 
 - Python 3.10+
-- A WeChat Official Account AppID and AppSecret
-- Server-side execution environment
-- API permissions for draft and publish endpoints
+- 微信公众号 AppID 和 AppSecret
+- 服务端运行环境
+- 草稿箱接口和发布接口权限
 
-Never put AppSecret or access tokens in frontend code, screenshots, logs, or committed files.
+AppSecret 和 access token 必须只放在服务端，不要写入前端代码、截图、日志或 git 仓库。
 
-## Quick Start
+## 快速开始
 
-Set credentials with environment variables:
+通过环境变量配置凭证：
 
 ```bash
 export WECHAT_APP_ID="your_app_id"
 export WECHAT_APP_SECRET="your_app_secret"
 ```
 
-Get an access token:
+获取 access token：
 
 ```bash
 python3 scripts/wechat_publish.py token
 ```
 
-You can also pass an existing access token. Auth flags work either before or after the subcommand:
+也可以传入已有 token。认证参数既可以放在子命令前，也可以放在子命令后：
 
 ```bash
 python3 scripts/wechat_publish.py --access-token "$ACCESS_TOKEN" token
 python3 scripts/wechat_publish.py token --access-token "$ACCESS_TOKEN"
 ```
 
-## CLI Commands
+## 命令说明
 
-Upload an inline image for article HTML:
+上传正文内图片，返回可用于文章 HTML 的微信图片 URL：
 
 ```bash
 python3 scripts/wechat_publish.py upload-inline-image ./body.jpg
 ```
 
-Upload a permanent cover image:
+上传永久封面素材，返回 `media_id`：
 
 ```bash
 python3 scripts/wechat_publish.py upload-material ./cover.jpg --type image
 ```
 
-Create a draft:
+创建草稿：
 
 ```bash
 python3 scripts/wechat_publish.py add-draft ./draft.json
 ```
 
-Submit a draft for publication:
+提交草稿发布：
 
 ```bash
 python3 scripts/wechat_publish.py submit-publish DRAFT_MEDIA_ID
 ```
 
-Poll publish status:
+查询发布状态：
 
 ```bash
 python3 scripts/wechat_publish.py get-publish PUBLISH_ID
 ```
 
-## Draft Payload Example
+## 草稿 JSON 示例
 
-`add-draft` accepts either an object with `articles` or a raw array of article objects.
+`add-draft` 支持两种输入格式：
+
+- `{"articles": [...]}`
+- 直接传入文章对象数组 `[...]`
+
+示例：
 
 ```json
 {
   "articles": [
     {
       "article_type": "news",
-      "title": "Article title",
-      "author": "Author",
-      "digest": "Short summary",
-      "content": "<p>HTML content with WeChat-hosted image URLs</p>",
+      "title": "文章标题",
+      "author": "作者",
+      "digest": "摘要",
+      "content": "<p>正文 HTML，图片需使用微信托管 URL</p>",
       "content_source_url": "https://example.com/source",
       "thumb_media_id": "PERMANENT_MEDIA_ID",
       "need_open_comment": 0,
@@ -121,44 +132,44 @@ python3 scripts/wechat_publish.py get-publish PUBLISH_ID
 }
 ```
 
-For normal news articles, `title`, `content`, and `thumb_media_id` are required. Body images should use URLs returned by the inline image upload endpoint.
+普通图文文章至少需要提供 `title`、`content` 和 `thumb_media_id`。正文图片应先通过正文图片上传接口上传，并替换为微信返回的图片 URL。
 
-## Token Cache
+## Token 缓存
 
-By default, the helper stores a temporary token cache in:
+脚本默认会把 token 临时缓存到：
 
 ```text
 .wechat_access_token.json
 ```
 
-This file is ignored by `.gitignore`. You can override the cache location:
+该文件已被 `.gitignore` 忽略。也可以指定其他缓存路径：
 
 ```bash
 python3 scripts/wechat_publish.py token --cache-file /secure/path/wechat_token.json
 ```
 
-## Troubleshooting
+## 常见问题
 
-`48001 api unauthorized`
+### 48001 api unauthorized
 
-The account or AppID does not have permission to call the API. Check account type, certification status, and Developer Center API permissions.
+账号或 AppID 没有权限调用对应接口。请检查公众号主体类型、认证状态，以及开发者中心里的接口权限。
 
-`53503 draft check failed`
+### 53503 draft check failed
 
-The draft did not pass WeChat's publish checks. Review required fields, cover media, content format, and article images.
+草稿没有通过微信发布检查。请检查必填字段、封面素材、正文格式和正文图片 URL。
 
-Submit succeeded but no article URL appears yet
+### 提交成功但暂时没有文章链接
 
-Publication is asynchronous. Use `get-publish` with the returned `publish_id` until the status is terminal.
+发布是异步流程。`submit-publish` 成功只表示任务已提交，不代表文章已经发布成功。需要使用返回的 `publish_id` 调用 `get-publish` 轮询到终态。
 
-## Security Checklist
+## 安全清单
 
-- Keep AppSecret and access tokens server-side.
-- Do not commit `.wechat_access_token.json`.
-- Redact `access_token` query parameters from logs.
-- Store draft and publish job IDs for audit and retry.
-- Add a manual confirmation step before calling `submit-publish` in admin tools.
+- AppSecret 和 access token 只保存在服务端。
+- 不要提交 `.wechat_access_token.json`。
+- 日志中不要记录带 `access_token` 的完整 URL。
+- 保存草稿 `media_id`、发布 `publish_id` 和发布结果，方便审计和重试。
+- 后台工具在调用 `submit-publish` 前应增加人工确认步骤。
 
-## Reference
+## 参考资料
 
-See [references/wechat-official-api.md](references/wechat-official-api.md) for endpoint details, payload notes, status codes, and implementation caveats.
+更多接口说明、字段限制、状态码和实现注意事项见 [references/wechat-official-api.md](references/wechat-official-api.md)。
