@@ -34,9 +34,18 @@ Track at least these records in the user's project:
 
 Use idempotency where possible: hash uploaded image files and reuse existing uploaded assets when the account and file hash match.
 
-## Script Helper
+## CLI Helper
 
-Use `scripts/wechat_publish.py` for direct API calls during implementation or testing.
+Use the pure Node.js CLI for direct API calls during implementation or testing:
+
+```bash
+npx github:LearnAIHubC/wechat-publish-articles --help
+npx github:LearnAIHubC/wechat-publish-articles token
+npx github:LearnAIHubC/wechat-publish-articles skill
+npx github:LearnAIHubC/wechat-publish-articles reference
+```
+
+The `skill` command prints this `SKILL.md`; the `reference` command prints `references/wechat-official-api.md`.
 
 Set credentials with environment variables or flags:
 
@@ -48,12 +57,12 @@ export WECHAT_APP_SECRET="..."
 Common commands:
 
 ```bash
-python scripts/wechat_publish.py token
-python scripts/wechat_publish.py upload-inline-image ./body.jpg
-python scripts/wechat_publish.py upload-material ./cover.jpg --type image
-python scripts/wechat_publish.py add-draft ./draft.json
-python scripts/wechat_publish.py submit-publish MEDIA_ID
-python scripts/wechat_publish.py get-publish PUBLISH_ID
+npx github:LearnAIHubC/wechat-publish-articles token
+npx github:LearnAIHubC/wechat-publish-articles upload-inline-image ./body.jpg
+npx github:LearnAIHubC/wechat-publish-articles upload-material ./cover.jpg --type image
+npx github:LearnAIHubC/wechat-publish-articles add-draft ./draft.json
+npx github:LearnAIHubC/wechat-publish-articles submit-publish MEDIA_ID
+npx github:LearnAIHubC/wechat-publish-articles get-publish PUBLISH_ID
 ```
 
 The `add-draft` input may be either `{"articles": [...]}` or a raw JSON array of article objects.

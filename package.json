@@ -1,0 +1,29 @@
+{
+  "name": "wechat-publish-articles",
+  "version": "0.1.0",
+  "description": "Pure Node.js CLI and Codex skill for publishing WeChat Official Account articles.",
+  "type": "module",
+  "bin": {
+    "wechat-publish-articles": "bin/wechat-publish-articles.js"
+  },
+  "files": [
+    "bin/",
+    "agents/",
+    "references/",
+    "SKILL.md",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "node --check bin/wechat-publish-articles.js && node bin/wechat-publish-articles.js --help"
+  },
+  "keywords": [
+    "wechat",
+    "official-account",
+    "publishing",
+    "codex-skill",
+    "llm-tools"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
