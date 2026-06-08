@@ -1,6 +1,6 @@
 # WeChat Publish Articles
 
-一个用于微信公众号文章发布流程的 Codex Skill 和 Python 命令行辅助脚本。
+一个用于微信公众号文章发布流程的 Codex Skill 和纯 Node.js 命令行工具。
 
 它可以辅助完成常见的服务端发布链路：
 
@@ -38,13 +38,14 @@
 │   └── openai.yaml
 ├── references/
 │   └── wechat-official-api.md
-└── scripts/
-    └── wechat_publish.py
+├── bin/
+│   └── wechat-publish-articles.js
+└── package.json
 ```
 
 ## 环境要求
 
-- Python 3.10+
+- Node.js 18+
 - 微信公众号 AppID 和 AppSecret
 - 服务端运行环境
 - 草稿箱接口和发布接口权限
@@ -52,6 +53,37 @@
 AppSecret 和 access token 必须只放在服务端，不要写入前端代码、截图、日志或 git 仓库。
 
 ## 快速开始
+
+### 通过 npx 使用
+
+当前仓库已经包含 npm CLI 包配置，可以直接通过 GitHub 运行：
+
+```bash
+npx github:LearnAIHubC/wechat-publish-articles --help
+```
+
+调用发布工具：
+
+```bash
+npx github:LearnAIHubC/wechat-publish-articles token
+npx github:LearnAIHubC/wechat-publish-articles add-draft ./draft.json
+npx github:LearnAIHubC/wechat-publish-articles submit-publish DRAFT_MEDIA_ID
+```
+
+LLM 或自动化 Agent 可以直接读取 Skill 说明和接口参考：
+
+```bash
+npx github:LearnAIHubC/wechat-publish-articles skill
+npx github:LearnAIHubC/wechat-publish-articles reference
+```
+
+如果后续发布到 npm registry，也可以使用：
+
+```bash
+npx wechat-publish-articles --help
+```
+
+### 本地开发使用
 
 通过环境变量配置凭证：
 
@@ -63,46 +95,52 @@ export WECHAT_APP_SECRET="your_app_secret"
 获取 access token：
 
 ```bash
-python3 scripts/wechat_publish.py token
+node bin/wechat-publish-articles.js token
 ```
 
 也可以传入已有 token。认证参数既可以放在子命令前，也可以放在子命令后：
 
 ```bash
-python3 scripts/wechat_publish.py --access-token "$ACCESS_TOKEN" token
-python3 scripts/wechat_publish.py token --access-token "$ACCESS_TOKEN"
+node bin/wechat-publish-articles.js --access-token "$ACCESS_TOKEN" token
+node bin/wechat-publish-articles.js token --access-token "$ACCESS_TOKEN"
 ```
 
 ## 命令说明
 
+下面示例使用 npx。也可以把 `npx github:LearnAIHubC/wechat-publish-articles` 替换为本地命令：
+
+```bash
+node bin/wechat-publish-articles.js
+```
+
 上传正文内图片，返回可用于文章 HTML 的微信图片 URL：
 
 ```bash
-python3 scripts/wechat_publish.py upload-inline-image ./body.jpg
+npx github:LearnAIHubC/wechat-publish-articles upload-inline-image ./body.jpg
 ```
 
 上传永久封面素材，返回 `media_id`：
 
 ```bash
-python3 scripts/wechat_publish.py upload-material ./cover.jpg --type image
+npx github:LearnAIHubC/wechat-publish-articles upload-material ./cover.jpg --type image
 ```
 
 创建草稿：
 
 ```bash
-python3 scripts/wechat_publish.py add-draft ./draft.json
+npx github:LearnAIHubC/wechat-publish-articles add-draft ./draft.json
 ```
 
 提交草稿发布：
 
 ```bash
-python3 scripts/wechat_publish.py submit-publish DRAFT_MEDIA_ID
+npx github:LearnAIHubC/wechat-publish-articles submit-publish DRAFT_MEDIA_ID
 ```
 
 查询发布状态：
 
 ```bash
-python3 scripts/wechat_publish.py get-publish PUBLISH_ID
+npx github:LearnAIHubC/wechat-publish-articles get-publish PUBLISH_ID
 ```
 
 ## 草稿 JSON 示例
@@ -145,7 +183,7 @@ python3 scripts/wechat_publish.py get-publish PUBLISH_ID
 该文件已被 `.gitignore` 忽略。也可以指定其他缓存路径：
 
 ```bash
-python3 scripts/wechat_publish.py token --cache-file /secure/path/wechat_token.json
+npx github:LearnAIHubC/wechat-publish-articles token --cache-file /secure/path/wechat_token.json
 ```
 
 ## 常见问题
