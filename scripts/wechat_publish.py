@@ -203,11 +203,36 @@ def cmd_get_publish(args: argparse.Namespace) -> None:
 
 
 def add_auth_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--appid", help="WeChat AppID. Defaults to WECHAT_APP_ID.")
-    parser.add_argument("--secret", help="WeChat AppSecret. Defaults to WECHAT_APP_SECRET.")
-    parser.add_argument("--access-token", help="Use an existing token instead of reading cache or credentials.")
-    parser.add_argument("--cache-file", help=f"Token cache file. Defaults to {DEFAULT_CACHE_FILE}.")
-    parser.add_argument("--force-refresh", action="store_true", help="Ignore cached token and request a new one.")
+    parser.add_argument("--appid", default=argparse.SUPPRESS, help="WeChat AppID. Defaults to WECHAT_APP_ID.")
+    parser.add_argument("--secret", default=argparse.SUPPRESS, help="WeChat AppSecret. Defaults to WECHAT_APP_SECRET.")
+    parser.add_argument(
+        "--access-token",
+        default=argparse.SUPPRESS,
+        help="Use an existing token instead of reading cache or credentials.",
+    )
+    parser.add_argument(
+        "--cache-file",
+        default=argparse.SUPPRESS,
+        help=f"Token cache file. Defaults to {DEFAULT_CACHE_FILE}.",
+    )
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="Ignore cached token and request a new one.",
+    )
+
+
+def ensure_auth_defaults(args: argparse.Namespace) -> None:
+    for name, default in {
+        "appid": None,
+        "secret": None,
+        "access_token": None,
+        "cache_file": None,
+        "force_refresh": False,
+    }.items():
+        if not hasattr(args, name):
+            setattr(args, name, default)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -216,13 +241,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     token_parser = sub.add_parser("token", help="Get or refresh access_token")
+    add_auth_args(token_parser)
     token_parser.set_defaults(func=cmd_token)
 
     inline = sub.add_parser("upload-inline-image", help="Upload image for article body HTML and return URL")
+    add_auth_args(inline)
     inline.add_argument("file")
     inline.set_defaults(func=cmd_upload_inline_image)
 
     material = sub.add_parser("upload-material", help="Upload permanent material and return media_id")
+    add_auth_args(material)
     material.add_argument("file")
     material.add_argument("--type", default="image", choices=["image", "voice", "video", "thumb"])
     material.add_argument("--title", help="Video material title")
@@ -230,14 +258,17 @@ def build_parser() -> argparse.ArgumentParser:
     material.set_defaults(func=cmd_upload_material)
 
     draft = sub.add_parser("add-draft", help="Create a WeChat draft from JSON payload")
+    add_auth_args(draft)
     draft.add_argument("payload")
     draft.set_defaults(func=cmd_add_draft)
 
     submit = sub.add_parser("submit-publish", help="Submit draft media_id for publication")
+    add_auth_args(submit)
     submit.add_argument("media_id")
     submit.set_defaults(func=cmd_submit_publish)
 
     status = sub.add_parser("get-publish", help="Get publish job status")
+    add_auth_args(status)
     status.add_argument("publish_id")
     status.set_defaults(func=cmd_get_publish)
 
@@ -247,6 +278,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    ensure_auth_defaults(args)
     try:
         args.func(args)
         return 0

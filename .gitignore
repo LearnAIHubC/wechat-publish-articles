@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+.wechat_access_token.json
+wechat_token_smoke_*.json
