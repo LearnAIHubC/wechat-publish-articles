@@ -1,0 +1,4 @@
+interface:
+  display_name: "WeChat Article Publisher"
+  short_description: "Upload assets and publish WeChat drafts"
+  default_prompt: "Use $wechat-publish-articles to upload article assets, create a WeChat draft, and submit it for publication."
